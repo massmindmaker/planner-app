@@ -3,40 +3,128 @@ import { useYearStats } from "@/hooks/use-stats";
 import { MonthCard } from "@/components/dashboard/month-card";
 import { YearProgress } from "@/components/dashboard/year-progress";
 import { GoalsSummary } from "@/components/dashboard/goals-summary";
+import { motion } from "motion/react";
+import { useMemo } from "react";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Доброе утро";
+  if (hour < 18) return "Добрый день";
+  return "Добрый вечер";
+}
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const fadeInLeft = {
+  hidden: { opacity: 0, x: -30 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
+};
+
+const gridContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+    },
+  },
+};
+
+const gridItemVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
+  },
+};
 
 export default function DashboardPage() {
   const { data, isLoading } = useYearStats();
+  const greeting = useMemo(() => getGreeting(), []);
 
-  if (isLoading) return <div className="text-muted-foreground">Загрузка...</div>;
+  if (isLoading)
+    return (
+      <div className="text-muted-foreground flex items-center justify-center h-40">
+        Загрузка...
+      </div>
+    );
 
   const months = data?.months ?? [];
   const goals = data?.goals ?? { total: 0, completed: 0 };
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      className="space-y-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
       <div>
-        <h1 className="text-2xl font-bold">Обзор</h1>
-        <p className="text-muted-foreground mt-1">
+        <motion.p
+          className="text-sm text-muted-foreground mb-1"
+          variants={fadeInLeft}
+        >
+          {greeting} ☀️
+        </motion.p>
+        <motion.h1
+          className="text-2xl font-bold"
+          variants={fadeInLeft}
+        >
+          Обзор
+        </motion.h1>
+        <motion.p
+          className="text-muted-foreground mt-1"
+          variants={fadeInUp}
+        >
           «Либо ты пишешь свой план сам, либо кто-то другой использует тебя в своём.»
-        </p>
+        </motion.p>
       </div>
 
-      <YearProgress months={months} />
-      <GoalsSummary total={goals.total} completed={goals.completed} />
+      <motion.div variants={fadeInUp}>
+        <YearProgress months={months} />
+      </motion.div>
+
+      <motion.div variants={fadeInUp}>
+        <GoalsSummary total={goals.total} completed={goals.completed} />
+      </motion.div>
 
       <div>
-        <h2 className="text-lg font-semibold mb-3">Месяцы</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <motion.h2
+          className="text-lg font-semibold mb-3"
+          variants={fadeInUp}
+        >
+          Месяцы
+        </motion.h2>
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          variants={gridContainerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {months.map((m: any) => (
-            <MonthCard
-              key={m.month}
-              month={m.month}
-              progress={m.progress}
-              totalHabits={m.totalHabits}
-            />
+            <motion.div key={m.month} variants={gridItemVariants}>
+              <MonthCard
+                month={m.month}
+                progress={m.progress}
+                totalHabits={m.totalHabits}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

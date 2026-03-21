@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useUpdateGoal } from "@/hooks/use-goals";
+import { useUpdateGoal, useDeleteGoal } from "@/hooks/use-goals";
+import { Trash2 } from "lucide-react";
+import { motion } from "motion/react";
 
 interface GoalRowProps {
   goal: {
@@ -15,14 +16,57 @@ interface GoalRowProps {
     weeklyHabit: string | null;
     monthlyHabit: string | null;
   };
+  accentColor?: string;
 }
 
-export function GoalRow({ goal }: GoalRowProps) {
+function AnimatedCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors duration-200",
+        checked
+          ? "border-green-500 bg-green-500"
+          : "border-muted-foreground/40 bg-transparent hover:border-muted-foreground"
+      )}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        className="h-3 w-3"
+        stroke="white"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <motion.path
+          d="M4 12 L10 18 L20 6"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: checked ? 1 : 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        />
+      </svg>
+    </button>
+  );
+}
+
+export function GoalRow({ goal, accentColor }: GoalRowProps) {
   const [title, setTitle] = useState(goal.title);
   const [dailyHabit, setDailyHabit] = useState(goal.dailyHabit ?? "");
   const [weeklyHabit, setWeeklyHabit] = useState(goal.weeklyHabit ?? "");
   const [monthlyHabit, setMonthlyHabit] = useState(goal.monthlyHabit ?? "");
+  const [isHovered, setIsHovered] = useState(false);
   const updateGoal = useUpdateGoal();
+  const deleteGoal = useDeleteGoal();
 
   const handleBlur = (field: string, value: string, original: string | null) => {
     if (value !== (original ?? "")) {
@@ -34,42 +78,84 @@ export function GoalRow({ goal }: GoalRowProps) {
     updateGoal.mutate({ id: goal.id, data: { completed: checked } });
   };
 
+  const handleDelete = () => {
+    deleteGoal.mutate(goal.id);
+  };
+
   return (
-    <div className="space-y-1 py-1.5 border-b last:border-0">
+    <motion.div
+      layout
+      className={cn(
+        "space-y-1 py-1.5 border-b last:border-0 rounded-sm px-1 transition-colors duration-300 group relative",
+        goal.completed && "bg-green-50 dark:bg-green-950/20"
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex items-center gap-2">
-        <Checkbox checked={goal.completed} onCheckedChange={handleToggle} />
-        <span className="text-xs text-muted-foreground w-4">{goal.position}.</span>
+        <AnimatedCheckbox checked={goal.completed} onChange={handleToggle} />
+        <span className={cn("text-xs text-muted-foreground w-4", accentColor)}>
+          {goal.position}.
+        </span>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => handleBlur("title", title, goal.title)}
           placeholder="Введите цель..."
-          className={cn("h-7 text-sm", goal.completed && "line-through text-muted-foreground")}
+          className={cn(
+            "h-7 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary/30",
+            goal.completed && "line-through text-muted-foreground"
+          )}
         />
+        <motion.button
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
+          transition={{ duration: 0.15 }}
+          onClick={handleDelete}
+          className="shrink-0 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+          aria-label="Удалить цель"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </motion.button>
       </div>
       <div className="ml-8 grid grid-cols-3 gap-1">
-        <Input
-          value={dailyHabit}
-          onChange={(e) => setDailyHabit(e.target.value)}
-          onBlur={() => handleBlur("dailyHabit", dailyHabit, goal.dailyHabit)}
-          placeholder="Ежедневная..."
-          className="h-6 text-xs"
-        />
-        <Input
-          value={weeklyHabit}
-          onChange={(e) => setWeeklyHabit(e.target.value)}
-          onBlur={() => handleBlur("weeklyHabit", weeklyHabit, goal.weeklyHabit)}
-          placeholder="Еженедельная..."
-          className="h-6 text-xs"
-        />
-        <Input
-          value={monthlyHabit}
-          onChange={(e) => setMonthlyHabit(e.target.value)}
-          onBlur={() => handleBlur("monthlyHabit", monthlyHabit, goal.monthlyHabit)}
-          placeholder="Ежемесячная..."
-          className="h-6 text-xs"
-        />
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            Ежедн.
+          </span>
+          <Input
+            value={dailyHabit}
+            onChange={(e) => setDailyHabit(e.target.value)}
+            onBlur={() => handleBlur("dailyHabit", dailyHabit, goal.dailyHabit)}
+            placeholder="Привычка..."
+            className="h-6 text-xs focus:ring-2 focus:ring-blue-300/40 transition-all"
+          />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+            Еженед.
+          </span>
+          <Input
+            value={weeklyHabit}
+            onChange={(e) => setWeeklyHabit(e.target.value)}
+            onBlur={() => handleBlur("weeklyHabit", weeklyHabit, goal.weeklyHabit)}
+            placeholder="Привычка..."
+            className="h-6 text-xs focus:ring-2 focus:ring-amber-300/40 transition-all"
+          />
+        </div>
+        <div className="space-y-0.5">
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+            Ежемес.
+          </span>
+          <Input
+            value={monthlyHabit}
+            onChange={(e) => setMonthlyHabit(e.target.value)}
+            onBlur={() => handleBlur("monthlyHabit", monthlyHabit, goal.monthlyHabit)}
+            placeholder="Привычка..."
+            className="h-6 text-xs focus:ring-2 focus:ring-violet-300/40 transition-all"
+          />
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

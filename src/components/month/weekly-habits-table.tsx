@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { HabitCheckbox } from "./habit-checkbox";
 import { useWeeklyHabits, useCreateWeeklyHabit, useDeleteWeeklyHabit, useToggleWeeklyEntry } from "@/hooks/use-weekly-habits";
 import { CURRENT_YEAR } from "@/lib/utils";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface WeeklyHabitsTableProps {
   month: number;
@@ -18,6 +20,7 @@ export function WeeklyHabitsTable({ month }: WeeklyHabitsTableProps) {
   const deleteHabit = useDeleteWeeklyHabit();
   const toggleEntry = useToggleWeeklyEntry();
   const [newName, setNewName] = useState("");
+  const [addFocused, setAddFocused] = useState(false);
 
   const habits = data?.habits ?? [];
   const entries = data?.entries ?? [];
@@ -58,46 +61,81 @@ export function WeeklyHabitsTable({ month }: WeeklyHabitsTableProps) {
             </tr>
           </thead>
           <tbody>
-            {habits.map((habit: any) => (
-              <tr key={habit.id} className="border-t">
-                <td className="p-2">
-                  <div className="flex items-center gap-1">
-                    <span>{habit.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 opacity-0 hover:opacity-100 shrink-0"
-                      onClick={() => deleteHabit.mutate(habit.id)}
+            <AnimatePresence mode="popLayout">
+              {habits.map((habit: any, idx: number) => (
+                <motion.tr
+                  key={habit.id}
+                  className="border-t group"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20, height: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  layout
+                >
+                  <td className="p-2">
+                    <motion.div
+                      className="flex items-center gap-1"
+                      whileHover={{ x: 2 }}
+                      transition={{ duration: 0.15 }}
                     >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </td>
-                {[1, 2, 3, 4, 5].map((w) => (
-                  <td key={w} className="p-2 text-center">
-                    <HabitCheckbox
-                      checked={isChecked(habit.id, w)}
-                      onToggle={(c) => handleToggle(habit.id, w, c)}
-                    />
+                      <span className="cursor-default hover:text-primary transition-colors">
+                        {habit.name}
+                      </span>
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        whileHover={{ opacity: 1, scale: 1 }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 shrink-0 text-destructive hover:text-destructive"
+                          onClick={() => deleteHabit.mutate(habit.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </motion.div>
+                    </motion.div>
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {[1, 2, 3, 4, 5].map((w) => (
+                    <td key={w} className="p-2 text-center">
+                      <HabitCheckbox
+                        checked={isChecked(habit.id, w)}
+                        onToggle={(c) => handleToggle(habit.id, w, c)}
+                      />
+                    </td>
+                  ))}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </tbody>
         </table>
 
-        <div className="flex gap-2 mt-3">
+        {/* Add habit */}
+        <motion.div
+          className="flex gap-2 mt-3"
+          animate={{
+            height: addFocused ? 44 : 36,
+            scale: addFocused ? 1.01 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        >
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            onFocus={() => setAddFocused(true)}
+            onBlur={() => setAddFocused(false)}
             placeholder="Новая еженедельная привычка..."
-            className="h-8 text-sm"
+            className={cn(
+              "text-sm transition-all duration-200",
+              addFocused ? "h-10 ring-2 ring-primary/30" : "h-8"
+            )}
           />
           <Button size="sm" onClick={handleAdd} disabled={!newName.trim()}>
             <Plus className="h-3 w-3 mr-1" /> Добавить
           </Button>
-        </div>
+        </motion.div>
       </CardContent>
     </Card>
   );
