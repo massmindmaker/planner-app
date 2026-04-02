@@ -1,6 +1,7 @@
 "use client";
 import { toast } from "sonner";
 import * as LucideIcons from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface Achievement {
   name: string;
@@ -21,6 +22,8 @@ function getDynamicIcon(name: string) {
 
 export function showAchievementToast(achievement: Achievement) {
   const Icon = getDynamicIcon(achievement.icon);
+
+  confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#FFD700', '#FFA500', '#FF6347'] });
 
   toast.custom((id) => (
     <div className="flex items-center gap-3 rounded-xl border border-violet-200 bg-white px-4 py-3 shadow-xl dark:border-violet-800 dark:bg-zinc-900 min-w-[280px]">

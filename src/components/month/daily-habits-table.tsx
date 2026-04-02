@@ -7,7 +7,8 @@ import { HabitCheckbox } from "./habit-checkbox";
 import { HabitCreationDialog } from "./habit-creation-dialog";
 import { useDailyHabits, useDeleteDailyHabit, useToggleDailyEntry } from "@/hooks/use-daily-habits";
 import { getDaysInMonth, getDayOfWeek, getWeekNumber, CURRENT_YEAR } from "@/lib/utils";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 interface DailyHabitsTableProps {
@@ -65,9 +66,12 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
   const { data, isLoading } = useDailyHabits(month);
   const deleteHabit = useDeleteDailyHabit();
   const toggleEntry = useToggleDailyEntry();
+  const [deletedIds, setDeletedIds] = useState<number[]>([]);
+  const deleteTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const days = getDaysInMonth(CURRENT_YEAR, month);
-  const habits = data?.habits ?? [];
+  const rawHabits = data?.habits ?? [];
+  const habits = rawHabits.filter((h: any) => !deletedIds.includes(h.id));
   const entries = data?.entries ?? [];
 
   const isChecked = (habitId: number, day: number) => {
@@ -172,7 +176,27 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
                             variant="ghost"
                             size="icon"
                             className="h-5 w-5 shrink-0 text-destructive hover:text-destructive"
-                            onClick={() => deleteHabit.mutate(habit.id)}
+                            onClick={() => {
+                              const id = habit.id;
+                              setDeletedIds((prev) => [...prev, id]);
+                              toast("Удалено", {
+                                action: {
+                                  label: "Отменить",
+                                  onClick: () => {
+                                    clearTimeout(deleteTimers.current.get(id));
+                                    deleteTimers.current.delete(id);
+                                    setDeletedIds((prev) => prev.filter((d) => d !== id));
+                                  },
+                                },
+                                duration: 5000,
+                              });
+                              const timer = setTimeout(() => {
+                                deleteHabit.mutate(id);
+                                deleteTimers.current.delete(id);
+                                setDeletedIds((prev) => prev.filter((d) => d !== id));
+                              }, 5000);
+                              deleteTimers.current.set(id, timer);
+                            }}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>

@@ -1,12 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useUpdateGoal, useDeleteGoal } from "@/hooks/use-goals";
 import { Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { InlineEdit } from "@/components/shared/inline-edit";
-import { ConfirmationDialog } from "@/components/shared/confirmation-dialog";
+import { toast } from "sonner";
 
 interface GoalRowProps {
   goal: {
@@ -67,6 +67,8 @@ export function GoalRow({ goal, accentColor }: GoalRowProps) {
   const [weeklyHabit, setWeeklyHabit] = useState(goal.weeklyHabit ?? "");
   const [monthlyHabit, setMonthlyHabit] = useState(goal.monthlyHabit ?? "");
   const [isHovered, setIsHovered] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const updateGoal = useUpdateGoal();
   const deleteGoal = useDeleteGoal();
 
@@ -81,8 +83,30 @@ export function GoalRow({ goal, accentColor }: GoalRowProps) {
   };
 
   const handleDelete = () => {
-    deleteGoal.mutate(goal.id);
+    // Optimistically hide
+    setIsDeleted(true);
+
+    toast("Удалено", {
+      action: {
+        label: "Отменить",
+        onClick: () => {
+          if (deleteTimerRef.current) {
+            clearTimeout(deleteTimerRef.current);
+            deleteTimerRef.current = null;
+          }
+          setIsDeleted(false);
+        },
+      },
+      duration: 5000,
+    });
+
+    deleteTimerRef.current = setTimeout(() => {
+      deleteGoal.mutate(goal.id);
+      deleteTimerRef.current = null;
+    }, 5000);
   };
+
+  if (isDeleted) return null;
 
   return (
     <motion.div
@@ -119,21 +143,14 @@ export function GoalRow({ goal, accentColor }: GoalRowProps) {
           transition={{ duration: 0.15 }}
           className="shrink-0"
         >
-          <ConfirmationDialog
-            trigger={
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                aria-label="Удалить цель"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            }
-            title="Удалить цель?"
-            description="Это действие нельзя отменить. Цель будет удалена навсегда."
-            onConfirm={handleDelete}
-            destructive
-          />
+          <button
+            type="button"
+            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+            aria-label="Удалить цель"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
         </motion.div>
       </div>
       <div className="ml-8 grid grid-cols-3 gap-1">

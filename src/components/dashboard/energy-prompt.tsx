@@ -1,6 +1,7 @@
 "use client";
 import { motion, AnimatePresence } from "motion/react";
 import { useEnergy, useUpsertEnergy } from "@/hooks/use-energy";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import * as api from "@/lib/api";
@@ -32,6 +33,7 @@ export function EnergyPrompt({ date }: EnergyPromptProps) {
     try {
       await upsertEnergy.mutateAsync({ date, level });
       await api.awardXp({ date, xpGained: XP_VALUES.energy_log, source: "energy_log" });
+      toast.success("Энергия записана ⚡");
     } finally {
       setTimeout(() => setDismissed(true), 600);
     }

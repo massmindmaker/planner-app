@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "motion/react";
 import { useQuarterThemes, useUpsertQuarterTheme } from "@/hooks/use-quarter-themes";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { InlineEdit } from "@/components/shared/inline-edit";
 import { Sparkles } from "lucide-react";
@@ -22,7 +23,10 @@ export function QuarterTheme() {
 
   const handleSave = (value: string) => {
     if (!value.trim()) return;
-    upsertTheme.mutate({ year, quarter, title: value.trim(), description: theme?.description ?? "" });
+    upsertTheme.mutate(
+      { year, quarter, title: value.trim(), description: theme?.description ?? "" },
+      { onSuccess: () => toast.success("Тема обновлена") }
+    );
   };
 
   return (

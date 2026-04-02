@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Star, Save, Loader2 } from "lucide-react";
 import { useReviews, useCreateReview, useUpdateReview } from "@/hooks/use-reviews";
+import { toast } from "sonner";
 import { useMonthStats } from "@/hooks/use-stats";
 import { CURRENT_YEAR } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -140,6 +141,7 @@ export function ReviewForm({ type, year = CURRENT_YEAR, week, month }: ReviewFor
     } else {
       await createReview.mutateAsync(payload);
     }
+    toast.success("Обзор сохранён");
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

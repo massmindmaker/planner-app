@@ -1,21 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Check } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
 import {
   useMonthFocus,
   useCreateMonthFocus,
@@ -40,7 +30,6 @@ interface FocusItemProps {
 function FocusItem({ item, onToggle, onDelete, onRename, index }: FocusItemProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.title);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const commitEdit = () => {
     const trimmed = editValue.trim();
@@ -118,38 +107,16 @@ function FocusItem({ item, onToggle, onDelete, onRename, index }: FocusItemProps
         </span>
       )}
 
-      {/* Delete button with confirmation */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogTrigger
-          render={
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, scale: 0.6 }}
-              whileHover={{ opacity: 1, scale: 1 }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-destructive hover:text-destructive/80 p-0.5 rounded"
-            />
-          }
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить фокус?</AlertDialogTitle>
-            <AlertDialogDescription>
-              &ldquo;{item.title}&rdquo; будет удалён без возможности восстановления.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => onDelete(item.id)}
-            >
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Delete button */}
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, scale: 0.6 }}
+        whileHover={{ opacity: 1, scale: 1 }}
+        onClick={() => onDelete(item.id)}
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-destructive hover:text-destructive/80 p-0.5 rounded"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </motion.button>
     </motion.div>
   );
 }
@@ -161,9 +128,11 @@ export function MonthFocus({ month }: MonthFocusProps) {
   const remove = useDeleteMonthFocus();
   const [newTitle, setNewTitle] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
+  const [deletedItems, setDeletedItems] = useState<{ id: number; title: string; completed: boolean }[]>([]);
+  const deleteTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-  const focusItems: { id: number; title: string; completed: boolean }[] =
-    items ?? [];
+  const rawItems: { id: number; title: string; completed: boolean }[] = items ?? [];
+  const focusItems = rawItems.filter((i) => !deletedItems.some((d) => d.id === i.id));
 
   const handleAdd = () => {
     const trimmed = newTitle.trim();
@@ -181,7 +150,32 @@ export function MonthFocus({ month }: MonthFocusProps) {
   };
 
   const handleDelete = (id: number) => {
-    remove.mutate(id);
+    const item = rawItems.find((i) => i.id === id);
+    if (!item) return;
+
+    // Optimistically remove from UI
+    setDeletedItems((prev) => [...prev, item]);
+
+    // Show undo toast
+    toast("Удалено", {
+      action: {
+        label: "Отменить",
+        onClick: () => {
+          clearTimeout(deleteTimers.current.get(id));
+          deleteTimers.current.delete(id);
+          setDeletedItems((prev) => prev.filter((d) => d.id !== id));
+        },
+      },
+      duration: 5000,
+    });
+
+    // After 5s actually delete
+    const timer = setTimeout(() => {
+      remove.mutate(id);
+      deleteTimers.current.delete(id);
+      setDeletedItems((prev) => prev.filter((d) => d.id !== id));
+    }, 5000);
+    deleteTimers.current.set(id, timer);
   };
 
   const completedCount = focusItems.filter((i) => i.completed).length;

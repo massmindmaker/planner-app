@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 import { useWheel, useWheelYear, useSaveWheel } from "@/hooks/use-wheel";
 import { useCategories } from "@/hooks/use-goals";
 import { WheelRadarChart, ScoreEntry } from "@/components/wheel/radar-chart";
@@ -73,11 +74,14 @@ export default function WheelPage() {
   const hasPreviousData = radarPrevious.some((r) => r.score > 0);
 
   function handleSave(scores: CategoryScore[]) {
-    saveWheel.mutate({
-      year: currentYear,
-      month: selectedMonth,
-      scores: scores.map((s) => ({ categoryId: s.categoryId, score: s.score })),
-    });
+    saveWheel.mutate(
+      {
+        year: currentYear,
+        month: selectedMonth,
+        scores: scores.map((s) => ({ categoryId: s.categoryId, score: s.score })),
+      },
+      { onSuccess: () => toast.success("Оценки сохранены") }
+    );
   }
 
   if (isLoading) {
