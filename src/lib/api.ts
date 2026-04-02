@@ -32,7 +32,7 @@ export const getDailyHabits = (month: number, year?: number) =>
 export const createDailyHabit = (data: any) => mutate<any>("/habits/daily", "POST", data);
 export const updateDailyHabit = (id: number, data: any) => mutate<any>(`/habits/daily/${id}`, "PATCH", data);
 export const deleteDailyHabit = (id: number) => mutate<any>(`/habits/daily/${id}`, "DELETE");
-export const toggleDailyEntry = (id: number, data: { date: string; completed: boolean }) =>
+export const toggleDailyEntry = (id: number, data: { date: string; completed: boolean; value?: number; isMinimum?: boolean }) =>
   mutate<any>(`/habits/daily/${id}/entries`, "PUT", data);
 
 // Weekly Habits

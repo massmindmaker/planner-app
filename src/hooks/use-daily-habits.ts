@@ -36,8 +36,19 @@ export function useDeleteDailyHabit() {
 export function useToggleDailyEntry() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, date, completed }: { id: number; date: string; completed: boolean }) =>
-      api.toggleDailyEntry(id, { date, completed }),
+    mutationFn: ({
+      id,
+      date,
+      completed,
+      value,
+      isMinimum,
+    }: {
+      id: number;
+      date: string;
+      completed: boolean;
+      value?: number;
+      isMinimum?: boolean;
+    }) => api.toggleDailyEntry(id, { date, completed, value, isMinimum }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dailyHabits"] });
       qc.invalidateQueries({ queryKey: ["stats"] });
