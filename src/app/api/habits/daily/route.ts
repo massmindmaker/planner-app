@@ -11,13 +11,40 @@ export async function GET(request: NextRequest) {
   const month = Number(sp.get("month"));
   if (!month) return NextResponse.json({ error: "month required" }, { status: 400 });
 
-  const habits = await db
+  const rawHabits = await db
     .select()
     .from(dailyHabits)
     .where(and(eq(dailyHabits.year, year), eq(dailyHabits.month, month)))
     .orderBy(asc(dailyHabits.position));
 
-  const habitIds = habits.map((h) => h.id);
+  // Fetch templates for habits that have a templateId
+  const templateIds = rawHabits
+    .map((h) => h.templateId)
+    .filter((id): id is number => id != null);
+
+  const templates = templateIds.length
+    ? await db
+        .select()
+        .from(habitTemplates)
+        .where(inArray(habitTemplates.id, templateIds))
+    : [];
+
+  const templateMap = new Map(templates.map((t) => [t.id, t]));
+
+  // Merge template fields into each habit
+  const habits = rawHabits.map((h) => {
+    const tpl = h.templateId != null ? templateMap.get(h.templateId) : undefined;
+    return {
+      ...h,
+      polarity: tpl?.polarity ?? "positive",
+      habitType: tpl?.habitType ?? "boolean",
+      targetValue: tpl?.targetValue ?? null,
+      unit: tpl?.unit ?? null,
+      minVersion: tpl?.minVersion ?? null,
+    };
+  });
+
+  const habitIds = rawHabits.map((h) => h.id);
   const entries = habitIds.length
     ? await db
         .select()

@@ -1,11 +1,13 @@
 "use client";
-import { use } from "react";
+import { use, useState } from "react";
 import { redirect } from "next/navigation";
 import { motion } from "motion/react";
 import { MonthHeader } from "@/components/month/month-header";
 import { MonthFocus } from "@/components/month/month-focus";
 import { DailyHabitsTable } from "@/components/month/daily-habits-table";
 import { WeeklyHabitsTable } from "@/components/month/weekly-habits-table";
+import { KeyboardShortcutsModal } from "@/components/month/keyboard-shortcuts-modal";
+import { useHabitKeyboard } from "@/hooks/use-habit-keyboard";
 import { Button } from "@/components/ui/button";
 import { ClipboardList } from "lucide-react";
 
@@ -31,6 +33,14 @@ export default function MonthPage({
 }) {
   const { month: monthStr } = use(params);
   const month = Number(monthStr);
+
+  const [habitCreationOpen, setHabitCreationOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
+  useHabitKeyboard({
+    onNewHabit: () => setHabitCreationOpen(true),
+    onToggleHelp: () => setShortcutsOpen((prev) => !prev),
+  });
 
   if (isNaN(month) || month < 1 || month > 12) {
     redirect("/");
@@ -75,7 +85,11 @@ export default function MonthPage({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.45 }}
       >
-        <DailyHabitsTable month={month} />
+        <DailyHabitsTable
+          month={month}
+          habitCreationOpen={habitCreationOpen}
+          onHabitCreationOpenChange={setHabitCreationOpen}
+        />
       </motion.div>
 
       <motion.div
@@ -97,6 +111,11 @@ export default function MonthPage({
           Итоги месяца
         </Button>
       </motion.div>
+
+      <KeyboardShortcutsModal
+        open={shortcutsOpen}
+        onOpenChange={setShortcutsOpen}
+      />
     </motion.div>
   );
 }
