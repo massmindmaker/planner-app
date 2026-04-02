@@ -1,8 +1,9 @@
 import { db } from "@/lib/db";
-import { dailyHabits, dailyHabitEntries, yearlyGoals } from "@/lib/db/schema";
-import { eq, and, count, sql } from "drizzle-orm";
+import { dailyHabits, dailyHabitEntries, yearlyGoals, userXp } from "@/lib/db/schema";
+import { eq, and, count, sql, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { CURRENT_YEAR } from "@/lib/utils";
+import { getLevel } from "@/lib/xp";
 
 export async function GET(request: NextRequest) {
   const year = Number(request.nextUrl.searchParams.get("year")) || CURRENT_YEAR;
@@ -50,8 +51,16 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // XP and level
+  const xpResult = await db
+    .select({ total: sum(userXp.xpGained) })
+    .from(userXp);
+  const totalXp = Number(xpResult[0]?.total ?? 0);
+  const levelInfo = getLevel(totalXp);
+
   return NextResponse.json({
     goals: goals[0],
     months: monthStats,
+    xp: levelInfo,
   });
 }
