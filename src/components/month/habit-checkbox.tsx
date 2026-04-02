@@ -7,9 +7,11 @@ interface HabitCheckboxProps {
   onToggle: (checked: boolean) => void;
   /** When true, a checked state means a failure (shown in red) */
   isNegative?: boolean;
+  /** When true, shows an amber/yellow half-filled state (minimum version completed) */
+  isMinimum?: boolean;
 }
 
-export function HabitCheckbox({ checked, onToggle, isNegative = false }: HabitCheckboxProps) {
+export function HabitCheckbox({ checked, onToggle, isNegative = false, isMinimum = false }: HabitCheckboxProps) {
   const [optimistic, setOptimistic] = useState(checked);
   const [ripple, setRipple] = useState(false);
 
@@ -27,9 +29,17 @@ export function HabitCheckbox({ checked, onToggle, isNegative = false }: HabitCh
     }
   };
 
-  // Colors: positive = green, negative = red
-  const checkedColor = isNegative ? "rgb(239 68 68)" : "rgb(34 197 94)";
-  const rippleColor = isNegative ? "bg-red-400/30" : "bg-green-400/30";
+  // Colors: minimum = amber, positive = green, negative = red
+  const checkedColor = isMinimum && optimistic
+    ? "rgb(245 158 11)"
+    : isNegative
+    ? "rgb(239 68 68)"
+    : "rgb(34 197 94)";
+  const rippleColor = isMinimum && optimistic
+    ? "bg-amber-400/30"
+    : isNegative
+    ? "bg-red-400/30"
+    : "bg-green-400/30";
 
   return (
     <motion.button
@@ -74,10 +84,31 @@ export function HabitCheckbox({ checked, onToggle, isNegative = false }: HabitCh
           strokeWidth="2"
         />
 
-        {/* Positive: checkmark path */}
-        {!isNegative && (
+        {/* Positive non-minimum: full checkmark path */}
+        {!isNegative && !isMinimum && (
           <motion.path
             d="M7 12.5l3.5 3.5 6.5-7"
+            stroke="white"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+            initial={false}
+            animate={{
+              pathLength: optimistic ? 1 : 0,
+              opacity: optimistic ? 1 : 0,
+            }}
+            transition={{
+              pathLength: { duration: 0.3, ease: "easeInOut", delay: optimistic ? 0.05 : 0 },
+              opacity: { duration: 0.15 },
+            }}
+          />
+        )}
+
+        {/* Minimum state: half-check (short dash) */}
+        {isMinimum && !isNegative && (
+          <motion.path
+            d="M7 12.5l3 3 3.5-3.5"
             stroke="white"
             strokeWidth="2.5"
             strokeLinecap="round"

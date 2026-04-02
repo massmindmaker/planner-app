@@ -20,15 +20,22 @@ import { cn } from "@/lib/utils";
 interface HabitCreationDialogProps {
   month: number;
   habitCount: number;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
 }
 
 type Polarity = "positive" | "negative";
 type HabitType = "boolean" | "numeric" | "weekly_target";
 
-export function HabitCreationDialog({ month, habitCount }: HabitCreationDialogProps) {
+export function HabitCreationDialog({ month, habitCount, externalOpen, onExternalOpenChange }: HabitCreationDialogProps) {
   const createHabit = useCreateDailyHabit();
 
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    onExternalOpenChange?.(v);
+  };
   const [name, setName] = useState("");
   const [polarity, setPolarity] = useState<Polarity>("positive");
   const [habitType, setHabitType] = useState<HabitType>("boolean");

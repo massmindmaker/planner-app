@@ -29,6 +29,7 @@ export const createDailyHabitSchema = z.object({
 export const updateDailyHabitSchema = z.object({
   name: z.string().min(1).optional(),
   goal: z.number().int().nullable().optional(),
+  position: z.number().int().optional(),
 });
 
 export const toggleDailyEntrySchema = z.object({
