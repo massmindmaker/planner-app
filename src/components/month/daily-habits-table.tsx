@@ -1,11 +1,11 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { HabitCheckbox } from "./habit-checkbox";
-import { useDailyHabits, useCreateDailyHabit, useDeleteDailyHabit, useToggleDailyEntry } from "@/hooks/use-daily-habits";
+import { HabitCreationDialog } from "./habit-creation-dialog";
+import { useDailyHabits, useDeleteDailyHabit, useToggleDailyEntry } from "@/hooks/use-daily-habits";
 import { getDaysInMonth, getDayOfWeek, getWeekNumber, CURRENT_YEAR } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -51,13 +51,20 @@ function isWeekend(year: number, month: number, day: number): boolean {
   return dow === 0 || dow === 6;
 }
 
+/** Inline polarity badge — no external badge component needed */
+function PolarityBadge({ polarity }: { polarity?: string }) {
+  if (!polarity || polarity === "positive") return null;
+  return (
+    <span className="inline-flex items-center rounded px-1 py-0 text-[9px] font-semibold leading-tight bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 shrink-0">
+      −
+    </span>
+  );
+}
+
 export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
   const { data, isLoading } = useDailyHabits(month);
-  const createHabit = useCreateDailyHabit();
   const deleteHabit = useDeleteDailyHabit();
   const toggleEntry = useToggleDailyEntry();
-  const [newName, setNewName] = useState("");
-  const [addFocused, setAddFocused] = useState(false);
 
   const days = getDaysInMonth(CURRENT_YEAR, month);
   const habits = data?.habits ?? [];
@@ -71,17 +78,6 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
   const handleToggle = (habitId: number, day: number, checked: boolean) => {
     const dateStr = `${CURRENT_YEAR}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     toggleEntry.mutate({ id: habitId, date: dateStr, completed: checked });
-  };
-
-  const handleAdd = () => {
-    if (!newName.trim()) return;
-    createHabit.mutate({
-      month,
-      name: newName.trim(),
-      position: habits.length + 1,
-      year: CURRENT_YEAR,
-    });
-    setNewName("");
   };
 
   const getTotal = (habitId: number) =>
@@ -98,7 +94,10 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">Ежедневные привычки</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Ежедневные привычки</CardTitle>
+          <HabitCreationDialog month={month} habitCount={habits.length} />
+        </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-xs">
@@ -138,67 +137,78 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
           </thead>
           <tbody>
             <AnimatePresence mode="popLayout">
-              {habits.map((habit: any, idx: number) => (
-                <motion.tr
-                  key={habit.id}
-                  className="border-t group"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20, height: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.05 }}
-                  layout
-                >
-                  <td className="p-1 sticky left-0 bg-card z-10">
-                    <motion.div
-                      className="flex items-center gap-1"
-                      whileHover={{ x: 2 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      <span className="truncate cursor-default hover:text-primary transition-colors">
-                        {habit.name}
-                      </span>
+              {habits.map((habit: any, idx: number) => {
+                const isNegative = habit.polarity === "negative";
+                return (
+                  <motion.tr
+                    key={habit.id}
+                    className="border-t group"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20, height: 0 }}
+                    transition={{ duration: 0.3, delay: idx * 0.05 }}
+                    layout
+                  >
+                    <td className="p-1 sticky left-0 bg-card z-10">
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        whileHover={{ opacity: 1, scale: 1 }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="flex items-center gap-1"
+                        whileHover={{ x: 2 }}
+                        transition={{ duration: 0.15 }}
                       >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-5 w-5 shrink-0 text-destructive hover:text-destructive"
-                          onClick={() => deleteHabit.mutate(habit.id)}
+                        <PolarityBadge polarity={habit.polarity} />
+                        <span className={cn(
+                          "truncate cursor-default hover:text-primary transition-colors",
+                          isNegative && "text-red-600/80 dark:text-red-400/80"
+                        )}>
+                          {habit.name}
+                        </span>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          whileHover={{ opacity: 1, scale: 1 }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 shrink-0 text-destructive hover:text-destructive"
+                            onClick={() => deleteHabit.mutate(habit.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
-                  </td>
-                  {Array.from({ length: days }, (_, i) => i + 1).map((d) => {
-                    const weekNum = getWeekNumber(CURRENT_YEAR, month, d);
-                    const prevWeek = d > 1 ? getWeekNumber(CURRENT_YEAR, month, d - 1) : 0;
-                    const weekend = isWeekend(CURRENT_YEAR, month, d);
-                    return (
-                      <td
-                        key={d}
-                        className={cn(
-                          "p-1 text-center",
-                          weekNum !== prevWeek && d > 1 && "border-l-2 border-muted-foreground/20",
-                          weekend && "bg-muted/40"
-                        )}
-                      >
-                        <HabitCheckbox
-                          checked={isChecked(habit.id, d)}
-                          onToggle={(c) => handleToggle(habit.id, d, c)}
-                        />
-                      </td>
-                    );
-                  })}
-                  <td className="p-1 text-center text-muted-foreground">{habit.goal ?? "\u2014"}</td>
-                  <td className="p-1 text-center font-medium">
-                    <AnimatedNumber value={getTotal(habit.id)} />
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    {Array.from({ length: days }, (_, i) => i + 1).map((d) => {
+                      const weekNum = getWeekNumber(CURRENT_YEAR, month, d);
+                      const prevWeek = d > 1 ? getWeekNumber(CURRENT_YEAR, month, d - 1) : 0;
+                      const weekend = isWeekend(CURRENT_YEAR, month, d);
+                      return (
+                        <td
+                          key={d}
+                          className={cn(
+                            "p-1 text-center",
+                            weekNum !== prevWeek && d > 1 && "border-l-2 border-muted-foreground/20",
+                            weekend && "bg-muted/40"
+                          )}
+                        >
+                          <HabitCheckbox
+                            checked={isChecked(habit.id, d)}
+                            onToggle={(c) => handleToggle(habit.id, d, c)}
+                            isNegative={isNegative}
+                          />
+                        </td>
+                      );
+                    })}
+                    <td className="p-1 text-center text-muted-foreground">{habit.goal ?? "\u2014"}</td>
+                    <td className={cn(
+                      "p-1 text-center font-medium",
+                      isNegative && "text-red-500"
+                    )}>
+                      <AnimatedNumber value={getTotal(habit.id)} />
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </AnimatePresence>
             {/* Progress row */}
             <motion.tr
@@ -240,31 +250,6 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
           </tbody>
         </table>
 
-        {/* Add habit */}
-        <motion.div
-          className="flex gap-2 mt-3"
-          animate={{
-            height: addFocused ? 44 : 36,
-            scale: addFocused ? 1.01 : 1,
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        >
-          <Input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            onFocus={() => setAddFocused(true)}
-            onBlur={() => setAddFocused(false)}
-            placeholder="Новая привычка..."
-            className={cn(
-              "text-sm transition-all duration-200",
-              addFocused ? "h-10 ring-2 ring-primary/30" : "h-8"
-            )}
-          />
-          <Button size="sm" onClick={handleAdd} disabled={!newName.trim()}>
-            <Plus className="h-3 w-3 mr-1" /> Добавить
-          </Button>
-        </motion.div>
       </CardContent>
     </Card>
   );

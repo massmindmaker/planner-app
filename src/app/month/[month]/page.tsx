@@ -3,8 +3,11 @@ import { use } from "react";
 import { redirect } from "next/navigation";
 import { motion } from "motion/react";
 import { MonthHeader } from "@/components/month/month-header";
+import { MonthFocus } from "@/components/month/month-focus";
 import { DailyHabitsTable } from "@/components/month/daily-habits-table";
 import { WeeklyHabitsTable } from "@/components/month/weekly-habits-table";
+import { Button } from "@/components/ui/button";
+import { ClipboardList } from "lucide-react";
 
 const MONTH_QUOTES: Record<number, string> = {
   1: "Новый год -- новые привычки. Начни с малого, но начни сейчас.",
@@ -64,7 +67,7 @@ export default function MonthPage({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
       >
-        <DailyHabitsTable month={month} />
+        <MonthFocus month={month} />
       </motion.div>
 
       <motion.div
@@ -72,7 +75,27 @@ export default function MonthPage({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.45 }}
       >
+        <DailyHabitsTable month={month} />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
+      >
         <WeeklyHabitsTable month={month} />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut", delay: 0.75 }}
+        className="flex justify-center pt-2"
+      >
+        <Button variant="outline" className="gap-2" disabled>
+          <ClipboardList className="h-4 w-4" />
+          Итоги месяца
+        </Button>
       </motion.div>
     </motion.div>
   );
