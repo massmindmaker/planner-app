@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useUpdateGoal, useDeleteGoal } from "@/hooks/use-goals";
 import { Trash2 } from "lucide-react";
 import { motion } from "motion/react";
+import { InlineEdit } from "@/components/shared/inline-edit";
+import { ConfirmationDialog } from "@/components/shared/confirmation-dialog";
 
 interface GoalRowProps {
   goal: {
@@ -97,26 +99,42 @@ export function GoalRow({ goal, accentColor }: GoalRowProps) {
         <span className={cn("text-xs text-muted-foreground w-4", accentColor)}>
           {goal.position}.
         </span>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onBlur={() => handleBlur("title", title, goal.title)}
-          placeholder="Введите цель..."
-          className={cn(
-            "h-7 text-sm transition-all duration-300 focus:ring-2 focus:ring-primary/30",
-            goal.completed && "line-through text-muted-foreground"
-          )}
-        />
-        <motion.button
+        <div className={cn(
+          "flex-1 text-sm transition-all duration-300",
+          goal.completed && "line-through text-muted-foreground"
+        )}>
+          <InlineEdit
+            value={title}
+            onSave={(val) => {
+              setTitle(val);
+              updateGoal.mutate({ id: goal.id, data: { title: val || null } });
+            }}
+            placeholder="Введите цель..."
+            className="text-sm w-full"
+          />
+        </div>
+        <motion.div
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 10 }}
           transition={{ duration: 0.15 }}
-          onClick={handleDelete}
-          className="shrink-0 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-          aria-label="Удалить цель"
+          className="shrink-0"
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </motion.button>
+          <ConfirmationDialog
+            trigger={
+              <button
+                type="button"
+                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                aria-label="Удалить цель"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            }
+            title="Удалить цель?"
+            description="Это действие нельзя отменить. Цель будет удалена навсегда."
+            onConfirm={handleDelete}
+            destructive
+          />
+        </motion.div>
       </div>
       <div className="ml-8 grid grid-cols-3 gap-1">
         <div className="space-y-0.5">

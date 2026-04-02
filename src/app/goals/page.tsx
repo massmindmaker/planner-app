@@ -1,6 +1,8 @@
 "use client";
 import { useCategories, useGoals } from "@/hooks/use-goals";
 import { CategoryCard } from "@/components/goals/category-card";
+import { QuarterTheme } from "@/components/dashboard/quarter-theme";
+import { SkeletonCard } from "@/components/shared/skeleton-card";
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
 import { useEffect, useRef } from "react";
 
@@ -29,7 +31,17 @@ export default function GoalsPage() {
   const { data: goals, isLoading: goalsLoading } = useGoals();
 
   if (catLoading || goalsLoading) {
-    return <div className="text-muted-foreground">Загрузка...</div>;
+    return (
+      <div className="space-y-6">
+        <SkeletonCard className="h-16" />
+        <SkeletonCard className="h-12" />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const allGoals = goals ?? [];
@@ -38,6 +50,8 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
+      <QuarterTheme />
+
       <motion.div
         initial={{ opacity: 0, x: -40 }}
         animate={{ opacity: 1, x: 0 }}
