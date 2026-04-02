@@ -1,6 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
+import { checkAchievements } from "@/lib/api";
 
 export function useDailyHabits(month: number, year?: number) {
   return useQuery({
@@ -51,7 +52,8 @@ export function useToggleDailyEntry() {
     }) => api.toggleDailyEntry(id, { date, completed, value, isMinimum }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["dailyHabits"] });
-      qc.invalidateQueries({ queryKey: ["stats"] });
+      qc.invalidateQueries({ queryKey: ["monthStats"] });
+      checkAchievements(); // fire and forget
     },
   });
 }
