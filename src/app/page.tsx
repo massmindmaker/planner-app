@@ -8,6 +8,7 @@ import { QuarterTheme } from "@/components/dashboard/quarter-theme";
 import { XpSummary } from "@/components/dashboard/xp-summary";
 import { HeatmapPreview } from "@/components/dashboard/heatmap-preview";
 import { AchievementShowcase } from "@/components/dashboard/achievement-showcase";
+import { TopStreaks } from "@/components/dashboard/top-streaks";
 import { useCheckAchievements } from "@/hooks/use-achievements";
 import { motion } from "motion/react";
 import { useMemo, useEffect } from "react";
@@ -131,6 +132,11 @@ export default function DashboardPage() {
       <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <XpSummary />
         <GoalsSummary total={goals.total} completed={goals.completed} />
+      </motion.div>
+
+      {/* 5b. Top streaks */}
+      <motion.div variants={fadeInUp}>
+        <TopStreaks />
       </motion.div>
 
       {/* 6. Achievement showcase */}
