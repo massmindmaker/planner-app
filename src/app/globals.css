@@ -366,3 +366,36 @@ textarea,
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ── Mobile Responsiveness ───────────────────────────────────── */
+/* Ensure minimum 44x44px tap targets on mobile */
+@media (max-width: 1023px) {
+  button,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exception: icon-only buttons inside tables can be smaller */
+  table button,
+  table [role="button"] {
+    min-height: 32px;
+    min-width: 32px;
+  }
+
+  /* Habit table horizontal scroll with sticky first column */
+  .habit-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .habit-table-scroll th:first-child,
+  .habit-table-scroll td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    background: inherit;
+  }
+}

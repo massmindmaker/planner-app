@@ -99,7 +99,8 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
           <HabitCreationDialog month={month} habitCount={habits.length} />
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
+      <CardContent>
+        <div className="habit-table-scroll">
         <table className="w-full text-xs">
           <thead>
             <tr>
@@ -249,7 +250,7 @@ export function DailyHabitsTable({ month }: DailyHabitsTableProps) {
             </motion.tr>
           </tbody>
         </table>
-
+        </div>
       </CardContent>
     </Card>
   );
