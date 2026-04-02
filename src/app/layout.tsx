@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-animated-gradient`}>
         <Providers>
           <Sidebar />
-          <main className="ml-64 min-h-screen bg-grid p-6">
+          <main className="lg:ml-64 min-h-screen bg-grid p-4 lg:p-6">
             <PageTransition>
               {children}
             </PageTransition>
