@@ -3,14 +3,24 @@ import { useYearStats } from "@/hooks/use-stats";
 import { MonthCard } from "@/components/dashboard/month-card";
 import { YearProgress } from "@/components/dashboard/year-progress";
 import { GoalsSummary } from "@/components/dashboard/goals-summary";
+import { EnergyPrompt } from "@/components/dashboard/energy-prompt";
+import { QuarterTheme } from "@/components/dashboard/quarter-theme";
+import { XpSummary } from "@/components/dashboard/xp-summary";
+import { HeatmapPreview } from "@/components/dashboard/heatmap-preview";
+import { AchievementShowcase } from "@/components/dashboard/achievement-showcase";
+import { useCheckAchievements } from "@/hooks/use-achievements";
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour < 12) return "Доброе утро";
   if (hour < 18) return "Добрый день";
   return "Добрый вечер";
+}
+
+function getTodayDate(): string {
+  return new Date().toISOString().split("T")[0];
 }
 
 const containerVariants = {
@@ -54,6 +64,14 @@ const gridItemVariants = {
 export default function DashboardPage() {
   const { data, isLoading } = useYearStats();
   const greeting = useMemo(() => getGreeting(), []);
+  const todayDate = useMemo(() => getTodayDate(), []);
+  const checkAchievements = useCheckAchievements();
+
+  useEffect(() => {
+    checkAchievements.mutate();
+    // Run once on mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading)
     return (
@@ -72,6 +90,7 @@ export default function DashboardPage() {
       initial="hidden"
       animate="visible"
     >
+      {/* 1. Greeting + quote */}
       <div>
         <motion.p
           className="text-sm text-muted-foreground mb-1"
@@ -93,14 +112,38 @@ export default function DashboardPage() {
         </motion.p>
       </div>
 
+      {/* 2. Energy prompt (hidden if already logged today) */}
+      <motion.div variants={fadeInUp}>
+        <EnergyPrompt date={todayDate} />
+      </motion.div>
+
+      {/* 3. Quarter theme banner */}
+      <motion.div variants={fadeInUp}>
+        <QuarterTheme />
+      </motion.div>
+
+      {/* 4. Year progress */}
       <motion.div variants={fadeInUp}>
         <YearProgress months={months} />
       </motion.div>
 
-      <motion.div variants={fadeInUp}>
+      {/* 5. XP summary + Goals summary (side by side) */}
+      <motion.div variants={fadeInUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <XpSummary />
         <GoalsSummary total={goals.total} completed={goals.completed} />
       </motion.div>
 
+      {/* 6. Achievement showcase */}
+      <motion.div variants={fadeInUp}>
+        <AchievementShowcase />
+      </motion.div>
+
+      {/* 7. Heatmap preview */}
+      <motion.div variants={fadeInUp}>
+        <HeatmapPreview />
+      </motion.div>
+
+      {/* 8. Month cards grid */}
       <div>
         <motion.h2
           className="text-lg font-semibold mb-3"
