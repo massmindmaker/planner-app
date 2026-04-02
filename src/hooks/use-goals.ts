@@ -2,13 +2,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/lib/api";
 import { checkAchievements } from "@/lib/api";
+import { useYear } from "@/contexts/year-context";
 
 export function useCategories() {
   return useQuery({ queryKey: ["categories"], queryFn: api.getCategories });
 }
 
 export function useGoals(year?: number) {
-  return useQuery({ queryKey: ["goals", year], queryFn: () => api.getGoals(year) });
+  const { year: contextYear } = useYear();
+  const resolvedYear = year ?? contextYear;
+  return useQuery({ queryKey: ["goals", resolvedYear], queryFn: () => api.getGoals(resolvedYear) });
 }
 
 export function useCreateGoal() {

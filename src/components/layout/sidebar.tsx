@@ -16,12 +16,16 @@ import {
   ChevronDown,
   Menu,
   X,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "motion/react";
 import { useXp } from "@/hooks/use-xp";
 import { getLevel } from "@/lib/xp";
 import { getISOWeek } from "date-fns";
+import { useYear } from "@/contexts/year-context";
+import { useTheme } from "@/hooks/use-theme";
 
 const navItems = [
   { href: "/", label: "Обзор", icon: LayoutDashboard },
@@ -53,6 +57,34 @@ function MonthDot({ monthIndex }: { monthIndex: number }) {
         color
       )}
     />
+  );
+}
+
+function YearSwitcher() {
+  const { year, setYear } = useYear();
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 1, currentYear, currentYear + 1];
+
+  return (
+    <div className="border-t border-sidebar-border px-4 py-2">
+      <select
+        value={year}
+        onChange={(e) => setYear(Number(e.target.value))}
+        className={cn(
+          "w-full rounded-md border border-sidebar-border bg-background px-2 py-1.5",
+          "text-xs font-medium text-sidebar-foreground",
+          "focus:outline-none focus:ring-1 focus:ring-primary",
+          "cursor-pointer transition-colors hover:bg-sidebar-accent"
+        )}
+        aria-label="Выбрать год"
+      >
+        {years.map((y) => (
+          <option key={y} value={y}>
+            {y === currentYear ? `${y} (текущий)` : String(y)}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -95,6 +127,7 @@ function XpBar() {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const [monthsExpanded, setMonthsExpanded] = useState(true);
+  const { theme, toggleTheme } = useTheme();
 
   const now = new Date();
   const currentWeek = getISOWeek(now);
@@ -104,7 +137,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex h-14 items-center border-b border-sidebar-border px-6 shrink-0">
+      <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4 shrink-0">
         <Link
           href="/"
           className="flex items-center gap-2 font-bold text-lg"
@@ -113,6 +146,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           <span className="text-gradient text-2xl">&#8734;</span>
           <span className="text-gradient">Планер</span>
         </Link>
+        <button
+          onClick={toggleTheme}
+          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors text-muted-foreground hover:text-sidebar-foreground"
+          aria-label={theme === "light" ? "Включить тёмную тему" : "Включить светлую тему"}
+        >
+          {theme === "light" ? (
+            <Moon className="h-4 w-4" />
+          ) : (
+            <Sun className="h-4 w-4" />
+          )}
+        </button>
       </div>
 
       <ScrollArea className="flex-1">
@@ -252,7 +296,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </nav>
       </ScrollArea>
 
-      {/* XP Bar Footer */}
+      {/* Year Switcher + XP Bar Footer */}
+      <YearSwitcher />
       <XpBar />
     </div>
   );
@@ -261,6 +306,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 export function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const { theme } = useTheme();
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -268,7 +314,7 @@ export function Sidebar() {
   }, [pathname]);
 
   const sidebarStyle = {
-    background: "rgba(255,255,255,0.7)",
+    background: theme === "dark" ? "rgba(24,20,36,0.85)" : "rgba(255,255,255,0.7)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
   };
