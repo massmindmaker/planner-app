@@ -9,9 +9,13 @@ import { XpSummary } from "@/components/dashboard/xp-summary";
 import { HeatmapPreview } from "@/components/dashboard/heatmap-preview";
 import { AchievementShowcase } from "@/components/dashboard/achievement-showcase";
 import { TopStreaks } from "@/components/dashboard/top-streaks";
+import { GoalHierarchyTree } from "@/components/dashboard/goal-hierarchy-tree";
 import { useCheckAchievements } from "@/hooks/use-achievements";
+import { useWheel } from "@/hooks/use-wheel";
 import { motion } from "motion/react";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
+import { MONTH_NAMES } from "@/lib/utils";
+import Link from "next/link";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -139,12 +143,17 @@ export default function DashboardPage() {
         <TopStreaks />
       </motion.div>
 
-      {/* 6. Achievement showcase */}
+      {/* 6. Goal hierarchy tree */}
+      <motion.div variants={fadeInUp}>
+        <GoalHierarchyTree />
+      </motion.div>
+
+      {/* 7. Achievement showcase */}
       <motion.div variants={fadeInUp}>
         <AchievementShowcase />
       </motion.div>
 
-      {/* 7. Heatmap preview */}
+      {/* 8. Heatmap preview */}
       <motion.div variants={fadeInUp}>
         <HeatmapPreview />
       </motion.div>

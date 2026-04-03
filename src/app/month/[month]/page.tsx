@@ -7,8 +7,10 @@ import { MonthFocus } from "@/components/month/month-focus";
 import { DailyHabitsTable } from "@/components/month/daily-habits-table";
 import { WeeklyHabitsTable } from "@/components/month/weekly-habits-table";
 import { KeyboardShortcutsModal } from "@/components/month/keyboard-shortcuts-modal";
+import { ReviewForm } from "@/components/week/review-form";
 import { useHabitKeyboard } from "@/hooks/use-habit-keyboard";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogTrigger, DialogContent } from "@/components/ui/dialog";
 import { ClipboardList } from "lucide-react";
 
 const MONTH_QUOTES: Record<number, string> = {
@@ -106,10 +108,17 @@ export default function MonthPage({
         transition={{ duration: 0.5, ease: "easeOut", delay: 0.75 }}
         className="flex justify-center pt-2"
       >
-        <Button variant="outline" className="gap-2" disabled>
-          <ClipboardList className="h-4 w-4" />
-          Итоги месяца
-        </Button>
+        <Dialog>
+          <DialogTrigger>
+            <Button variant="outline" className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Итоги месяца
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <ReviewForm type="monthly" year={new Date().getFullYear()} month={month} />
+          </DialogContent>
+        </Dialog>
       </motion.div>
 
       <KeyboardShortcutsModal
